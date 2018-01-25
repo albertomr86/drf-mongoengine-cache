@@ -6,8 +6,11 @@ from .settings import api_settings
 def get_cache_key(instance, serializer, pattern=False):
     """Get cache key of instance"""
 
+    if not getattr(instance, 'pk', None):
+        return None
+
     params = {
-        "id": instance.pk,
+        "id": getattr(instance, 'pk'),
         "model_name": instance._meta.get('collection'),
         "serializer_name": serializer.__name__
     }
@@ -24,7 +27,9 @@ def clear_for_instance(instance):
     serializers = cache_registry.get(instance.__class__)
 
     for serializer in serializers:
-        keys.append(get_cache_key(instance, serializer, pattern=api_settings.REMOVE_BY_PATTERN))
+        clear_key = get_cache_key(instance, serializer, pattern=api_settings.REMOVE_BY_PATTERN)
+        if clear_key:
+            keys.append(clear_key)
 
     if api_settings.REMOVE_BY_PATTERN:
         for key in keys:
